@@ -164,8 +164,11 @@ func decryptChromeCookie(enc, key []byte) (string, error) {
 	pt := make([]byte, len(ct))
 	cipher.NewCBCDecrypter(block, iv).CryptBlocks(pt, ct)
 	pt = pkcs7Unpad(pt)
-	// Newer Chrome prepends a 32-byte SHA-256 domain hash to the plaintext.
-	if len(pt) > 32 && !allPrintableASCII(pt) && allPrintableASCII(pt[32:]) {
+	// Newer Chrome prepends a 32-byte SHA-256 domain hash to the plaintext. Decide
+	// by the prefix bytes themselves: a SHA-256 hash is binary (non-printable),
+	// while the authToken value is printable ASCII. Strip only when the first 32
+	// bytes are non-printable and the remainder is a clean printable token.
+	if len(pt) > 32 && !allPrintableASCII(pt[:32]) && allPrintableASCII(pt[32:]) {
 		pt = pt[32:]
 	}
 	return string(pt), nil
@@ -178,6 +181,14 @@ func pkcs7Unpad(b []byte) []byte {
 	pad := int(b[len(b)-1])
 	if pad <= 0 || pad > aes.BlockSize || pad > len(b) {
 		return b
+	}
+	// A valid PKCS#7 block has every padding byte equal to pad; if not, the block
+	// is malformed (e.g. a corrupted cookie copy) — leave it untouched rather than
+	// returning silently-wrong plaintext.
+	for _, c := range b[len(b)-pad:] {
+		if int(c) != pad {
+			return b
+		}
 	}
 	return b[:len(b)-pad]
 }

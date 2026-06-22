@@ -392,7 +392,8 @@ func (s *Store) ListExpenses(filters map[string]string) ([]Expense, error) {
 	}
 	q += " ORDER BY date DESC, transaction_id DESC"
 	if lim := filters["limit"]; lim != "" {
-		q += " LIMIT " + lim
+		q += " LIMIT ?"
+		args = append(args, lim)
 	}
 	return s.queryExpenses(q, args...)
 }
@@ -447,8 +448,10 @@ func buildExpenseFilter(f map[string]string) (string, []any) {
 func (s *Store) SearchExpenses(query string, filters map[string]string) ([]Expense, error) {
 	filtWhere, filtArgs := buildExpenseFilter(filters)
 	limit := ""
+	var limitArgs []any
 	if lim := filters["limit"]; lim != "" {
-		limit = " LIMIT " + lim
+		limit = " LIMIT ?"
+		limitArgs = append(limitArgs, lim)
 	}
 	if strings.TrimSpace(query) == "" {
 		return s.ListExpenses(filters)
@@ -466,6 +469,7 @@ func (s *Store) SearchExpenses(query string, filters map[string]string) ([]Expen
 			args = append(args, filtArgs...)
 		}
 		q += " ORDER BY e.date DESC" + limit
+		args = append(args, limitArgs...)
 		return s.queryExpenses(q, args...)
 	}
 	// Fallback: plain LIKE
@@ -481,6 +485,7 @@ func (s *Store) SearchExpenses(query string, filters map[string]string) ([]Expen
 		args = append(args, filtArgs...)
 	}
 	q += " ORDER BY date DESC" + limit
+	args = append(args, limitArgs...)
 	return s.queryExpenses(q, args...)
 }
 

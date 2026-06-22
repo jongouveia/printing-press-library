@@ -64,16 +64,21 @@ func (l *adaptiveLimiter) Wait() {
 	if l == nil {
 		return
 	}
+	// Reserve the next slot atomically: compute when this request may fire and
+	// advance lastRequest to that time under a single lock, so concurrent callers
+	// get staggered slots instead of both reading the same lastRequest (TOCTOU).
 	l.mu.Lock()
 	delay := time.Duration(float64(time.Second) / l.rate)
-	elapsed := time.Since(l.lastRequest)
-	l.mu.Unlock()
-	if elapsed < delay {
-		time.Sleep(delay - elapsed)
+	next := l.lastRequest.Add(delay)
+	now := time.Now()
+	if next.Before(now) {
+		next = now
 	}
-	l.mu.Lock()
-	l.lastRequest = time.Now()
+	l.lastRequest = next
 	l.mu.Unlock()
+	if d := time.Until(next); d > 0 {
+		time.Sleep(d)
+	}
 }
 
 // OnSuccess records a successful request and ramps up the rate after enough consecutive successes.

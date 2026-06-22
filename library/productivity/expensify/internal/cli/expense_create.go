@@ -86,7 +86,9 @@ func newExpenseCreateCmd(flags *rootFlags) *cobra.Command {
 				if bodyBillable != false {
 					body["billable"] = bodyBillable
 				}
-				if bodyReimbursable != false {
+				// reimbursable defaults to true, so a "!= false" guard would silently
+				// drop an explicit --reimbursable=false. Use Changed() to honor it.
+				if cmd.Flags().Changed("reimbursable") {
 					body["reimbursable"] = bodyReimbursable
 				}
 			}
