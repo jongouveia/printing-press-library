@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "id": "expensify-created-not-date",
+  "applied_at": "2026-06-22",
+  "base_run_id": "20260622-210331",
+  "base_printing_press_version": "4.22.1",
+  "summary": "create/edit send the API's canonical 'created' field instead of 'date' (flag stays --date).",
+  "reason": "Expensify ignores 'date' on /RequestMoney and /EditMoneyRequest, so every expense landed as today; 'created' is what the API reads back.",
+  "files": ["internal/cli/expense_create.go", "internal/cli/expense_edit.go"],
+  "validated_outcome": "Live create with --date 2025-11-17 read back created=2025-11-17."
+}

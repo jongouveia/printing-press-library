@@ -1,163 +1,154 @@
 # Expensify CLI
 
-**File expenses and submit reports to Expensify in one line. Every command an agent should need, with a local cache so searches stay offline.**
-
-expensify-pp-cli turns the Expensify web app into a terminal. Log in once, and every filing/reviewing/submitting task that used to require clicking through forms becomes a single command. A local SQLite store gives you offline search, rollups, dupe detection, and missing-receipt alerts that no other Expensify tool has.
+File expenses and submit reports to Expensify from the command line
 
 Learn more at [Expensify](https://www.expensify.com/).
 
+Created by [@mvanhorn](https://github.com/mvanhorn) (Matt Van Horn).
+
 ## Install
 
-### Go
+The recommended path installs both the `expensify-pp-cli` binary and the `pp-expensify` agent skill (Claude Code, Codex, Cursor, Gemini CLI, GitHub Copilot, and other agents supported by the upstream [`skills`](https://github.com/vercel-labs/skills) CLI) in one shot:
 
+```bash
+npx -y @mvanhorn/printing-press-library install expensify
 ```
-go install github.com/mvanhorn/printing-press-library/library/productivity/expensify-pp-cli/cmd/expensify-pp-cli@latest
+
+For CLI only (no skill):
+
+```bash
+npx -y @mvanhorn/printing-press-library install expensify --cli-only
 ```
 
-### Binary
+For skill only — installs the skill into the same agents as the default command above, but skips the CLI binary (use this to update or reinstall just the skill):
 
-Download from [Releases](https://github.com/mvanhorn/printing-press-library/releases).
+```bash
+npx -y @mvanhorn/printing-press-library install expensify --skill-only
+```
 
-## Authentication
+To constrain the skill install to one or more specific agents (repeatable — agent names match the [`skills`](https://github.com/vercel-labs/skills) CLI):
 
-Two ways to authenticate: (1) `expensify auth login` opens a browser, you log in, the CLI captures your session token — works immediately for all filing/submitting commands; (2) `expensify auth set-keys` stores your Integration Server partner credentials (get them at https://www.expensify.com/tools/integrations/) — required only for export/admin commands. Most users only need option 1.
+```bash
+npx -y @mvanhorn/printing-press-library install expensify --agent claude-code
+npx -y @mvanhorn/printing-press-library install expensify --agent claude-code --agent codex
+```
+
+### Without Node (Go fallback)
+
+If `npx` isn't available (no Node, offline), install the CLI directly via Go (requires Go 1.26.4 or newer):
+
+```bash
+go install github.com/mvanhorn/printing-press-library/library/productivity/expensify/cmd/expensify-pp-cli@latest
+```
+
+This installs the CLI only — no skill.
+
+### Pre-built binary
+
+Download a pre-built binary for your platform from the [latest release](https://github.com/mvanhorn/printing-press-library/releases/tag/expensify-current). On macOS, clear the Gatekeeper quarantine: `xattr -d com.apple.quarantine <binary>`. On Unix, mark it executable: `chmod +x <binary>`.
+
+<!-- pp-hermes-install-anchor -->
+## Install for Hermes
+
+Install the CLI binary first. The installer writes binaries to a per-user managed bin directory by default: `$HOME/.local/bin` on macOS/Linux and `%LOCALAPPDATA%\Programs\PrintingPress\bin` on Windows.
+
+```bash
+npx -y @mvanhorn/printing-press-library install expensify --cli-only
+```
+
+Then install the focused Hermes skill.
+
+From the Hermes CLI:
+
+```bash
+hermes skills install mvanhorn/printing-press-library/cli-skills/pp-expensify --force
+```
+
+Inside a Hermes chat session:
+
+```bash
+/skills install mvanhorn/printing-press-library/cli-skills/pp-expensify --force
+```
+
+Restart the Hermes session or gateway if the newly installed skill is not visible immediately.
+
+## Install for OpenClaw
+Install both the CLI binary and the focused OpenClaw skill. The installer defaults binaries to a per-user bin directory (`$HOME/.local/bin` on macOS/Linux, `%LOCALAPPDATA%\Programs\PrintingPress\bin` on Windows):
+
+```bash
+npx -y @mvanhorn/printing-press-library install expensify --agent openclaw
+```
+
+Restart the OpenClaw session or gateway if the newly installed skill is not visible immediately.
+
+## Use with Claude Desktop
+
+This CLI ships an [MCPB](https://github.com/modelcontextprotocol/mcpb) bundle — Claude Desktop's standard format for one-click MCP extension installs (no JSON config required).
+
+To install:
+
+1. Download the `.mcpb` for your platform from the [latest release](https://github.com/mvanhorn/printing-press-library/releases/tag/expensify-current).
+2. Double-click the `.mcpb` file. Claude Desktop opens and walks you through the install.
+3. Fill in `EXPENSIFY_AUTH_TOKEN` when Claude Desktop prompts you.
+
+Requires Claude Desktop 1.0.0 or later. Pre-built bundles ship for macOS Apple Silicon (`darwin-arm64`) and Windows (`amd64`, `arm64`); for other platforms, use the manual config below.
+
+<details>
+<summary>Manual JSON config (advanced)</summary>
+
+If you can't use the MCPB bundle (older Claude Desktop, unsupported platform), install the MCP binary and configure it manually.
+
+
+```bash
+go install github.com/mvanhorn/printing-press-library/library/productivity/expensify/cmd/expensify-pp-mcp@latest
+```
+
+Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "expensify": {
+      "command": "expensify-pp-mcp",
+      "env": {
+        "EXPENSIFY_AUTH_TOKEN": "<your-key>"
+      }
+    }
+  }
+}
+```
+
+</details>
 
 ## Quick Start
 
+### 1. Install
+
+See [Install](#install) above.
+
+### 2. Set Up Credentials
+
+Get your API key from your API provider's developer portal. The key typically looks like a long alphanumeric string.
+
 ```bash
-# Browser-based login — captures your Expensify session
-expensify-pp-cli auth login
-
-# Pull your workspaces, expenses, and reports into a local cache
-expensify-pp-cli sync
-
-# File your first expense in one line
-expensify-pp-cli expense quick "Dinner at Maya $42.50"
-
-# Create a report and attach every un-reported expense from April
-expensify-pp-cli report draft --since 2026-04-01 --title "April expenses"
-
-# Submit for approval and block until it moves forward
-expensify-pp-cli report submit <report-id> --wait
-
+export EXPENSIFY_AUTH_TOKEN="<paste-your-key>"
 ```
 
-## Unique Features
+You can also persist this in your config file at `~/.config/expensify-pp-cli/config.toml`.
 
-These capabilities aren't available in any other tool for this API.
+### 3. Verify Setup
 
-### Filing at thought speed
-- **`expense quick`** — File an expense with one line: amount, merchant, and category parsed from a short prompt — no forms, no web UI.
+```bash
+expensify-pp-cli doctor
+```
 
-  _When a user tells an agent 'I just expensed dinner at Maya for $42.50,' the agent should file it in one call — not walk through six fields._
+This checks your configuration and credentials.
 
-  ```bash
-  expensify-pp-cli expense quick "Dinner at Maya $42.50" --agent
-  ```
-- **`report draft`** — Create a report and auto-attach every un-reported expense from a date range in a single command.
+### 4. Try Your First Command
 
-  _End-of-month submission turns from 45 clicks into one command._
-
-  ```bash
-  expensify-pp-cli report draft --since 2026-04-01 --title "April expenses" --policy 201C8BE1F19AACD2
-  ```
-- **`expense watch`** — Daemon mode — drop a receipt PNG/JPG/PDF into a folder, it auto-files as an expense.
-
-  _A scanner app or Siri shortcut drops files into Dropbox; this files them automatically._
-
-  ```bash
-  expensify-pp-cli expense watch ~/Receipts --policy 201C8BE1F19AACD2
-  ```
-- **`expense from-line`** — Paste a raw bank or card CSV row and the CLI extracts date/merchant/amount/currency and files the expense.
-
-  _Reconciling AmEx? Paste a row, file an expense. No copy-paste-copy-paste._
-
-  ```bash
-  expensify-pp-cli expense from-line "2026-04-18 DOORDASH*JOES $14.25" --category Meals
-  ```
-- **`expense quick`** — When filing an expense, suggests a category based on prior classifications for the same merchant.
-
-  _Filing is faster when the category is already right 90% of the time._
-
-  ```bash
-  expensify-pp-cli expense quick "Uber $24"  # auto-suggests Transportation
-  ```
-
-### Local state that compounds
-- **`damage`** — Single-glance summary: total expensed, pending, approved, paid for the current month (or a custom range).
-
-  _Agents asked 'how much did I expense this month' get one answer in one call._
-
-  ```bash
-  expensify-pp-cli damage --month current --json
-  ```
-- **`expense search`** — FTS5 search over all your expenses by merchant, comment, category, or tag. Regex-friendly.
-
-  _Agents asked 'did I expense that Starbucks last month' get an answer in one local query._
-
-  ```bash
-  expensify-pp-cli expense search "coffee" --since 2026-01-01 --json
-  ```
-- **`expense missing-receipts`** — Lists expenses without attached receipts so you can catch them before submitting a report.
-
-  _Submit-report-and-get-bounced feels bad; surface missing receipts upfront._
-
-  ```bash
-  expensify-pp-cli expense missing-receipts --json
-  ```
-- **`expense rollup`** — Pivot-table expenses by category, tag, or merchant for any time range.
-
-  _Build your own spending dashboard without burning API budget._
-
-  ```bash
-  expensify-pp-cli expense rollup --month 2026-04 --by category
-  ```
-- **`expense dupes`** — Finds expenses that look like duplicates by (merchant, amount, date±window).
-
-  _Accidental double-file is a top AP pain point; surface it before submission._
-
-  ```bash
-  expensify-pp-cli expense dupes --window 3d --json
-  ```
-
-### Agent-native plumbing
-- **`report submit --wait`** — Blocks until the report transitions past SUBMITTED, great for CI pipelines.
-
-  _CI jobs that submit expense reports can wait for approval before moving on._
-
-  ```bash
-  expensify-pp-cli report submit 1587860702457827 --wait --timeout 1h
-  ```
-- **`undo`** — Revert the last create/edit/submit action from the local action log.
-
-  _Agents sometimes file the wrong amount; one command to roll it back._
-
-  ```bash
-  expensify-pp-cli undo --dry-run
-  ```
-- **`mcp`** — Expose every subcommand as an MCP tool so Claude Desktop and other MCP clients can drive Expensify.
-
-  _Claude Desktop gets a single-install Expensify integration that matches this CLI's coverage exactly._
-
-  ```bash
-  expensify-pp-cli mcp --port 7021
-  ```
-
-### Admin orchestration
-- **`close`** — End-of-month orchestrator: list reports in range, export with GL template, download the file, mark-as-exported atomically.
-
-  _Finance teams close a month in one command instead of a 40-click sequence._
-
-  ```bash
-  expensify-pp-cli close --month 2026-04 --template netsuite --label "Apr close"
-  ```
-- **`admin policy-diff`** — Compare local YAML policy config against live API to preview changes before applying.
-
-  _Manage chart-of-accounts as code with dry-run safety._
-
-  ```bash
-  expensify-pp-cli admin policy diff 201C8BE1F19AACD2 categories.yaml
-  ```
+```bash
+expensify-pp-cli category --policy-id 550e8400-e29b-41d4-a716-446655440000
+```
 
 ## Usage
 
@@ -169,27 +160,27 @@ Run `expensify-pp-cli --help` for the full command reference and flag list.
 
 Integration Server: policy, employee, and rules admin
 
-- **`expensify-pp-cli admin cards_list`** - List domain cards (Domain Cards Getter)
-- **`expensify-pp-cli admin cards_owners`** - List card owners (Card Owner Data)
-- **`expensify-pp-cli admin employee_add`** - Add an employee to a policy (Advanced Employee Updater)
-- **`expensify-pp-cli admin employee_remove`** - Remove an employee from a policy
-- **`expensify-pp-cli admin employee_update`** - Update an employee (Advanced Employee Updater)
-- **`expensify-pp-cli admin policy_get`** - Get a policy's full config (Policy Getter)
-- **`expensify-pp-cli admin policy_list`** - List all policies you admin (Policy List Getter)
-- **`expensify-pp-cli admin policy_new`** - Create a new policy (Policy Creator)
-- **`expensify-pp-cli admin policy_set_categories`** - Update categories for a policy from YAML
-- **`expensify-pp-cli admin policy_set_fields`** - Update report fields for a policy
-- **`expensify-pp-cli admin policy_set_tags`** - Update tags for a policy from YAML
-- **`expensify-pp-cli admin report_set_status`** - Force a report status transition (Report Status Updater)
-- **`expensify-pp-cli admin rules_new`** - Create an expense rule (Expense Rules Creator)
-- **`expensify-pp-cli admin rules_update`** - Update an expense rule
-- **`expensify-pp-cli admin tag_approvers_set`** - Set tag approvers (Tag Approvers Updater)
+- **`expensify-pp-cli admin cards-list`** - List domain cards (Domain Cards Getter)
+- **`expensify-pp-cli admin cards-owners`** - List card owners (Card Owner Data)
+- **`expensify-pp-cli admin employee-add`** - Add an employee to a policy (Advanced Employee Updater)
+- **`expensify-pp-cli admin employee-remove`** - Remove an employee from a policy
+- **`expensify-pp-cli admin employee-update`** - Update an employee (Advanced Employee Updater)
+- **`expensify-pp-cli admin policy-get`** - Get a policy's full config (Policy Getter)
+- **`expensify-pp-cli admin policy-list`** - List all policies you admin (Policy List Getter)
+- **`expensify-pp-cli admin policy-new`** - Create a new policy (Policy Creator)
+- **`expensify-pp-cli admin policy-set-categories`** - Update categories for a policy from YAML
+- **`expensify-pp-cli admin policy-set-fields`** - Update report fields for a policy
+- **`expensify-pp-cli admin policy-set-tags`** - Update tags for a policy from YAML
+- **`expensify-pp-cli admin report-set-status`** - Force a report status transition (Report Status Updater)
+- **`expensify-pp-cli admin rules-new`** - Create an expense rule (Expense Rules Creator)
+- **`expensify-pp-cli admin rules-update`** - Update an expense rule
+- **`expensify-pp-cli admin tag-approvers-set`** - Set tag approvers (Tag Approvers Updater)
 
 ### category
 
 Workspace categories (for expense classification)
 
-- **`expensify-pp-cli category list`** - List categories for a workspace
+- **`expensify-pp-cli category`** - List categories for a workspace
 
 ### expense
 
@@ -202,24 +193,24 @@ Create, list, and manage personal expenses
 - **`expensify-pp-cli expense get`** - Get expense detail by transaction ID
 - **`expensify-pp-cli expense list`** - List your expenses with filters
 
-### export
+### export_resource
 
 Integration Server: export reports to accounting systems (admin)
 
-- **`expensify-pp-cli export download`** - Download a previously generated export file
-- **`expensify-pp-cli export run`** - Export reports via Report Exporter (Integration Server)
+- **`expensify-pp-cli export-resource download`** - Download a previously generated export file
+- **`expensify-pp-cli export-resource run`** - Export reports via Report Exporter (Integration Server)
 
 ### me
 
 Current user profile
 
-- **`expensify-pp-cli me get`** - Get current user profile
+- **`expensify-pp-cli me`** - Get current user profile
 
 ### recon
 
 Integration Server: corporate card reconciliation (admin)
 
-- **`expensify-pp-cli recon export`** - Export reconciliation data for a domain
+- **`expensify-pp-cli recon`** - Export reconciliation data for a domain
 
 ### report
 
@@ -240,7 +231,7 @@ Create, manage, and submit expense reports
 
 Workspace tags (multi-level, for expense classification)
 
-- **`expensify-pp-cli tag list`** - List tags for a workspace
+- **`expensify-pp-cli tag`** - List tags for a workspace
 
 ### workspace
 
@@ -254,19 +245,19 @@ View workspaces (policies) you have access to
 
 ```bash
 # Human-readable table (default in terminal, JSON when piped)
-expensify-pp-cli category list
+expensify-pp-cli category --policy-id 550e8400-e29b-41d4-a716-446655440000
 
 # JSON for scripting and agents
-expensify-pp-cli category list --json
+expensify-pp-cli category --policy-id 550e8400-e29b-41d4-a716-446655440000 --json
 
 # Filter to specific fields
-expensify-pp-cli category list --json --select id,name,status
+expensify-pp-cli category --policy-id 550e8400-e29b-41d4-a716-446655440000 --json --select id,name,status
 
 # Dry run — show the request without sending
-expensify-pp-cli category list --dry-run
+expensify-pp-cli category --policy-id 550e8400-e29b-41d4-a716-446655440000 --dry-run
 
 # Agent mode — JSON + compact + no prompts in one flag
-expensify-pp-cli category list --agent
+expensify-pp-cli category --policy-id 550e8400-e29b-41d4-a716-446655440000 --agent
 ```
 
 ## Agent Usage
@@ -277,41 +268,12 @@ This CLI is designed for AI agent consumption:
 - **Pipeable** - `--json` output to stdout, errors to stderr
 - **Filterable** - `--select id,name` returns only fields you need
 - **Previewable** - `--dry-run` shows the request without sending
-- **Retryable** - creates return "already exists" on retry, deletes return "already deleted"
+- **Explicit retries** - add `--idempotent` to create retries when a no-op success is acceptable
 - **Confirmable** - `--yes` for explicit confirmation of destructive actions
-- **Piped input** - `echo '{"key":"value"}' | expensify-pp-cli <resource> create --stdin`
-- **Cacheable** - GET responses cached for 5 minutes, bypass with `--no-cache`
+- **Piped input** - write commands can accept structured input when their help lists `--stdin`
 - **Agent-safe by default** - no colors or formatting unless `--human-friendly` is set
-- **Progress events** - paginated commands emit NDJSON events to stderr in default mode
 
 Exit codes: `0` success, `2` usage error, `3` not found, `4` auth error, `5` API error, `7` rate limited, `10` config error.
-
-## Use as MCP Server
-
-This CLI ships a companion MCP server for use with Claude Desktop, Cursor, and other MCP-compatible tools.
-
-### Claude Code
-
-```bash
-claude mcp add expensify expensify-pp-mcp -e EXPENSIFY_AUTH_TOKEN=<your-key>
-```
-
-### Claude Desktop
-
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "expensify": {
-      "command": "expensify-pp-mcp",
-      "env": {
-        "EXPENSIFY_AUTH_TOKEN": "<your-key>"
-      }
-    }
-  }
-}
-```
 
 ## Health Check
 
@@ -325,38 +287,32 @@ Verifies configuration, credentials, and connectivity to the API.
 
 Config file: `~/.config/expensify-pp-cli/config.toml`
 
+Static request headers can be configured under `headers`; per-command header overrides take precedence.
+
 Environment variables:
-- `EXPENSIFY_AUTH_TOKEN`
-- `EXPENSIFY_PARTNER_USER_ID`
-- `EXPENSIFY_PARTNER_USER_SECRET`
+
+| Name | Kind | Required | Description |
+| --- | --- | --- | --- |
+| `EXPENSIFY_AUTH_TOKEN` | per_call | Yes | Set to your API credential. |
+| `EXPENSIFY_PARTNER_USER_ID` | per_call | Yes | Set to your API credential. |
+| `EXPENSIFY_PARTNER_USER_SECRET` | per_call | Yes | Set to your API credential. |
+
+### agentcookie (optional)
+
+If you use agentcookie to sync secrets across machines, this CLI auto-adopts agentcookie-managed credentials with no extra setup. When the daemon writes to this CLI's config, `expensify-pp-cli doctor` reports `agentcookie: detected` and `auth-status` labels the source as `agentcookie`. Skip this section if you don't use agentcookie - the CLI works the same as any other.
 
 ## Troubleshooting
-
 **Authentication errors (exit code 4)**
 - Run `expensify-pp-cli doctor` to check credentials
 - Verify the environment variable is set: `echo $EXPENSIFY_AUTH_TOKEN`
-
 **Not found errors (exit code 3)**
 - Check the resource ID is correct
 - Run the `list` command to see available items
 
-**Rate limit errors (exit code 7)**
-- The CLI auto-retries with exponential backoff
-- If persistent, wait a few minutes and try again
+## HTTP Transport
 
-### API-specific
-- **`403 Forbidden` on every command** — Your session expired. Run `expensify-pp-cli auth login` again.
-- **`429 Too Many Requests`** — Integration Server enforces 5 req / 10s and 20 req / 60s. The CLI backs off automatically; if you see this, wait 60 seconds before retrying.
-- **`export run` asks for partner credentials** — Export commands use the Integration Server, not your session. Run `expensify-pp-cli auth set-keys` with credentials from https://www.expensify.com/tools/integrations/.
-- **`expense quick` can't parse my input** — Format: `<description> <merchant> $<amount>`. Example: `"Dinner at Maya $42.50"`. Use `--amount/--merchant/--category` flags for explicit control.
-- **Policy/category autocomplete is empty** — Run `expensify-pp-cli sync` to refresh the local cache.
+This CLI uses Chrome-compatible HTTP transport for browser-facing endpoints. It does not require a resident browser process for normal API calls.
 
-## Sources & Inspiration
-
-This CLI was built by studying these projects and resources:
-
-- [**justexpenseit**](https://github.com/meyskens/justexpenseit) — Go (1 stars)
-- [**primrose-mcp-expensify**](https://github.com/primrose-mcp/primrose-mcp-expensify) — TypeScript
-- [**expensify-mcp-http**](https://github.com/agenticledger/expensify-mcp-http) — JavaScript
+---
 
 Generated by [CLI Printing Press](https://github.com/mvanhorn/cli-printing-press)

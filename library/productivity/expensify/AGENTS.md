@@ -14,6 +14,7 @@ expensify-pp-cli agent-context --pretty
 Use runtime discovery instead of relying on a copied command list:
 
 ```bash
+expensify-pp-cli which "<capability>" --json
 expensify-pp-cli <command> --help
 ```
 
@@ -32,12 +33,10 @@ expensify-pp-cli <command> --dry-run --agent
 
 Use `--yes --no-input` only after the target, arguments, and side effects are clear.
 
-## Auth
-
-Expensify session tokens are short-lived. Acquire a token with `auth login --from-chrome` (reads the freshest `www.expensify.com` authToken from your signed-in Chrome) or pipe one in: `pbpaste | expensify-pp-cli auth set-token -`. The CLI also honors the `EXPENSIFY_AUTH_TOKEN` env var. Run `doctor` to distinguish "no token" from "token present but expired (407)".
-
-For install, examples, and longer product guidance, read `README.md` and `SKILL.md`. This file intentionally stays small so repo-local agents get invariant local guidance without duplicating the generated docs.
+For install, auth, examples, and longer product guidance, read `README.md` and `SKILL.md`. This file intentionally stays small so repo-local agents get invariant local guidance without duplicating the generated docs.
 
 ## Local Customizations
 
-This CLI carries hand-edits beyond generator output; each is recorded in `.printing-press-patches.json` at this CLI's root so the change isn't lost on the next regen and is visible to the next reader. That file is an index of customizations, not a second copy of the diff — diffs live in `git`.
+This directory is **generated output** -- a fresh print can overwrite the whole tree, so ad-hoc hand-edits don't survive on their own. If you modify the generated code, record each change under `.printing-press-patches/` (parallel to `.printing-press.json`) so a regen carries the intent forward instead of silently dropping it.
+
+The entry shape, and the altitude to write it at -- a durable reprint-guard, not a changelog -- live in the source catalog's `AGENTS.md`, which is the single source of truth; this guide intentionally doesn't duplicate them.

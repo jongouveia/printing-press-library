@@ -42,9 +42,9 @@ checksum:
 brews:
   - name: expensify-pp-cli
     repository:
-      owner: matt-van-horn
+      owner: mvanhorn
       name: homebrew-tap
-    homepage: "https://github.com/matt-van-horn/expensify-pp-cli"
+    homepage: "https://github.com/mvanhorn/expensify-pp-cli"
     description: "File expenses and submit reports to Expensify from the command line"
     install: |
       bin.install "expensify-pp-cli"
