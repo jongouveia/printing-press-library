@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "run_id": "20260420-121903",
+  "generated_at": "2026-04-20T21:34:46.341328Z",
+  "printing_press_version": "1.3.3-0.20260419220531-84043f3a72fb",
+  "api_name": "expensify",
+  "cli_name": "expensify-pp-cli",
+  "novel_features": [
+    {
+      "name": "Quick expense from natural language",
+      "command": "expense quick",
+      "description": "File an expense with one line: amount, merchant, and category parsed from a short prompt — no forms, no web UI."
+    },
+    {
+      "name": "Draft report from date range",
+      "command": "report draft",
+      "description": "Create a report and auto-attach every un-reported expense from a date range in a single command."
+    },
+    {
+      "name": "What's the damage",
+      "command": "damage",
+      "description": "Single-glance summary: total expensed, pending, approved, paid for the current month (or a custom range)."
+    },
+    {
+      "name": "Receipt folder watcher",
+      "command": "expense watch",
+      "description": "Daemon mode — drop a receipt PNG/JPG/PDF into a folder, it auto-files as an expense."
+    },
+    {
+      "name": "Expense from bank line",
+      "command": "expense from-line",
+      "description": "Paste a raw bank or card CSV row and the CLI extracts date/merchant/amount/currency and files the expense."
+    },
+    {
+      "name": "Offline expense search",
+      "command": "expense search",
+      "description": "FTS5 search over all your expenses by merchant, comment, category, or tag. Regex-friendly."
+    },
+    {
+      "name": "Missing receipts",
+      "command": "expense missing-receipts",
+      "description": "Lists expenses without attached receipts so you can catch them before submitting a report."
+    },
+    {
+      "name": "Monthly rollup",
+      "command": "expense rollup",
+      "description": "Pivot-table expenses by category, tag, or merchant for any time range."
+    },
+    {
+      "name": "Duplicate detection",
+      "command": "expense dupes",
+      "description": "Finds expenses that look like duplicates by (merchant, amount, date±window)."
+    },
+    {
+      "name": "Submit and wait",
+      "command": "report submit --wait",
+      "description": "Blocks until the report transitions past SUBMITTED, great for CI pipelines."
+    },
+    {
+      "name": "Undo last action",
+      "command": "undo",
+      "description": "Revert the last create/edit/submit action from the local action log."
+    },
+    {
+      "name": "MCP bridge",
+      "command": "mcp",
+      "description": "Expose every subcommand as an MCP tool so Claude Desktop and other MCP clients can drive Expensify."
+    },
+    {
+      "name": "Bulk close",
+      "command": "close",
+      "description": "End-of-month orchestrator: list reports in range, export with GL template, download the file, mark-as-exported atomically."
+    },
+    {
+      "name": "Policy diff",
+      "command": "admin policy-diff",
+      "description": "Compare local YAML policy config against live API to preview changes before applying."
+    },
+    {
+      "name": "Smart category suggest",
+      "command": "expense quick",
+      "description": "When filing an expense, suggests a category based on prior classifications for the same merchant."
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "api_name": "expensify",
+  "run_id": "20260420-121903",
+  "status": "fail",
+  "level": "quick",
+  "matrix_size": 14,
+  "tests_passed": 8,
+  "tests_skipped": 10,
+  "tests_failed": 6,
+  "auth_context": {
+    "type": "none",
+    "api_key_available": true
+  },
+  "failure_summary": {
+    "transport_error": 2,
+    "exit_nonzero": 4,
+    "commands": [
+      "category list",
+      "close",
+      "doctor",
+      "expense attach"
+    ]
+  }
+}
