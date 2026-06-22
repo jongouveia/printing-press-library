@@ -81,5 +81,11 @@
       "command": "expense quick",
       "description": "When filing an expense, suggests a category based on prior classifications for the same merchant."
     }
-  ]
+  ],
+  "printer": "mvanhorn",
+  "printer_name": "Matt Van Horn",
+  "creator": {
+    "handle": "mvanhorn",
+    "name": "Matt Van Horn"
+  }
 }
